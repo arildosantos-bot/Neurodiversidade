@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador Audio VU • Conscientização do Autismo & Neurodiversidade</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neuro: {
+                            blue: '#1e3a8a',
+                            lightBlue: '#38bdf8',
+                            teal: '#14b8a6',
+                            purple: '#8b5cf6',
+                            pink: '#ec4899',
+                            yellow: '#f59e0b',
+                            bg: '#0f172a'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism custom effects */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-button {
+            background: rgba(51, 65, 85, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.2s ease;
+        }
+
+        .glass-button:hover {
+            background: rgba(71, 85, 105, 0.7);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Range Sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: rgba(51, 65, 85, 0.6);
+            border-radius: 8px;
+            height: 6px;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            transition: transform 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Sensory Friendly Soft Theme overrides */
+        body.sensory-mode {
+            background-color: #0d131f !important;
+        }
+
+        body.sensory-mode .sensory-soft-glow {
+            box-shadow: none !important;
+            filter: blur(0px) !important;
+        }
+
+        body.sensory-mode .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            border-color: rgba(148, 163, 184, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between selection:bg-sky-500 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Background Ambient Glows -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div id="glow-bass" class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-900/30 rounded-full blur-[120px] transition-all duration-700"></div>
+        <div id="glow-mid" class="absolute top-1/3 -right-40 w-96 h-96 bg-teal-900/20 rounded-full blur-[120px] transition-all duration-700"></div>
+        <div id="glow-treble" class="absolute -bottom-40 left-1/3 w-96 h-96 bg-pink-900/20 rounded-full blur-[120px] transition-all duration-700"></div>
+    </div>
+
+    <!-- TOP HEADER -->
+    <header class="w-full glass-panel sticky top-0 z-40 px-4 lg:px-8 py-3.5 border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                <div class="flex items-center gap-3">
+                    <!-- Infinity Neurodiversity Logo SVG -->
+                    <div class="relative w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800/80 p-1.5 border border-slate-700/60 shadow-lg group">
+                        <svg class="w-full h-full text-sky-400 group-hover:scale-110 transition-transform duration-300" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="infGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#8b5cf6" />
+                                    <stop offset="33%" stop-color="#38bdf8" />
+                                    <stop offset="66%" stop-color="#14b8a6" />
+                                    <stop offset="100%" stop-color="#ec4899" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M 30,25 C 10,10 5,40 30,25 C 50,10 50,40 70,25 C 95,10 90,40 70,25 C 50,10 50,40 30,25 Z" 
+                                  stroke="url(#infGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sky-300 via-teal-200 to-purple-300">
+                            Audio Spectrum VU
+                        </h1>
+                        <p class="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
+                            <span class="inline-block w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                            Conscientização do Autismo & Neurodiversidade
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Mobile Sensory Mode Toggle -->
+                <button id="sensory-toggle-mobile" class="md:hidden glass-button p-2 rounded-xl text-xs flex items-center gap-1.5 text-amber-300 border-amber-500/30">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>Sensorial</span>
+                </button>
+            </div>
+
+            <!-- Top Actions & Sensory Mode Toggle -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                
+                <!-- Sensory Mode Button (Desktop) -->
+                <button id="sensory-toggle-btn" class="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold glass-button text-slate-200 border-slate-700 hover:border-amber-400/50 hover:text-amber-300 transition-all shadow-sm">
+                    <div id="sensory-icon-dot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
+                    <span>Modo Sensorial Calmo</span>
+                    <span id="sensory-status-tag" class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700">OFF</span>
+                </button>
+
+                <!-- Audio Engine Master Switch Button -->
+                <button id="start-audio-btn" class="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-sky-500 to-teal-500 text-slate-950 hover:from-sky-400 hover:to-teal-400 shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2">
+                    <svg id="start-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="start-btn-text">Ativar Áudio</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1 flex flex-col gap-6">
+
+        <!-- TOP STATUS STRIP & FREQUENCY DETECTOR -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            
+            <!-- Dynamic Predominant Band Card -->
+            <div class="glass-card rounded-2xl p-4 border border-slate-800 flex items-center justify-between relative overflow-hidden group">
+                <div class="z-10">
+                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Frequência Predominante</span>
+                    <div class="flex items-baseline gap-2">
+                        <span id="predominant-band-text" class="text-2xl font-extrabold text-slate-200">Aguardando...</span>
+                        <span id="predominant-hz-text" class="text-xs text-slate-400 font-mono">0 Hz</span>
+                    </div>
+                </div>
+                <div id="band-badge-icon" class="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-xl shadow-inner transition-colors duration-300">
+                    🎵
+                </div>
+                <div id="band-glow-bar" class="absolute bottom-0 left-0 right-0 h-1 bg-slate-700 transition-all duration-300"></div>
+            </div>
+
+            <!-- Grave (Bass) Energy Meter -->
+            <div class="glass-card rounded-2xl p-4 border border-indigo-900/30 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                        Graves (20Hz - 250Hz)
+                    </span>
+                    <span id="bass-percent" class="text-xs font-mono text-indigo-400 font-semibold">0%</span>
+                </div>
+                <div class="w-full bg-slate-800/90 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+                    <div id="bass-bar-fill" class="h-full bg-gradient-to-r from-indigo-700 via-indigo-500 to-purple-500 rounded-full w-0 transition-all duration-75"></div>
+                </div>
+            </div>
+
+            <!-- Médio (Mid) Energy Meter -->
+            <div class="glass-card rounded-2xl p-4 border border-teal-900/30 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-teal-300 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+                        Médios (250Hz - 4kHz)
+                    </span>
+                    <span id="mid-percent" class="text-xs font-mono text-teal-400 font-semibold">0%</span>
+                </div>
+                <div class="w-full bg-slate-800/90 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+                    <div id="mid-bar-fill" class="h-full bg-gradient-to-r from-teal-600 via-cyan-400 to-emerald-400 rounded-full w-0 transition-all duration-75"></div>
+                </div>
+            </div>
+
+            <!-- Agudo (Treble) Energy Meter -->
+            <div class="glass-card rounded-2xl p-4 border border-pink-900/30 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-pink-300 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+                        Agudos (4kHz - 20kHz)
+                    </span>
+                    <span id="treble-percent" class="text-xs font-mono text-pink-400 font-semibold">0%</span>
+                </div>
+                <div class="w-full bg-slate-800/90 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+                    <div id="treble-bar-fill" class="h-full bg-gradient-to-r from-pink-600 via-fuchsia-400 to-amber-300 rounded-full w-0 transition-all duration-75"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AUDIO SOURCE CONTROLS TOOLBAR -->
+        <div class="glass-panel rounded-2xl p-4 border border-slate-800 flex flex-col lg:flex-row gap-4 items-center justify-between">
+            
+            <!-- Source Selector Buttons -->
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">Fonte:</span>
+                
+                <!-- Mic Button -->
+                <button id="src-mic-btn" class="glass-button px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 flex items-center gap-2 border-slate-700 active-source">
+                    <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    <span>Microfone</span>
+                </button>
+
+                <!-- Synth Test Generator Button -->
+                <button id="src-synth-btn" class="glass-button px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 flex items-center gap-2 border-slate-700">
+                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                    <span>Sintetizador Teste</span>
+                </button>
+
+                <!-- File Upload Button -->
+                <label id="src-file-label" class="glass-button px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 flex items-center gap-2 border-slate-700 cursor-pointer hover:text-white">
+                    <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span id="file-btn-text">Arquivo Áudio</span>
+                    <input type="file" id="audio-file-input" accept="audio/*" class="hidden">
+                </label>
+            </div>
+
+            <!-- Knobs & Sliders (Sensitivity, Noise Gate, Visual Style) -->
+            <div class="flex flex-wrap items-center gap-5 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-800">
+                
+                <!-- Gain / Sensitivity Slider -->
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xs font-semibold text-slate-400">Sensibilidade:</span>
+                    <input type="range" id="sensitivity-slider" min="0.5" max="4.0" step="0.1" value="1.8" class="w-24 sm:w-28 accent-sky-400">
+                    <span id="sensitivity-val" class="text-xs font-mono text-sky-400 w-8 text-right">1.8x</span>
+                </div>
+
+                <!-- Noise Gate / Noise Filter -->
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xs font-semibold text-slate-400">Filtro Ruído:</span>
+                    <input type="range" id="noisegate-slider" min="0" max="40" step="1" value="8" class="w-20 sm:w-24 accent-teal-400">
+                    <span id="noisegate-val" class="text-xs font-mono text-teal-400 w-8 text-right">8%</span>
+                </div>
+
+                <!-- Visual Mode Selector -->
+                <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+                    <button id="view-bars-btn" class="px-2.5 py-1 rounded-lg text-xs font-medium text-sky-300 bg-slate-800 border border-slate-700" title="Barras VU Clássico">
+                        📊 Barras
+                    </button>
+                    <button id="view-wave-btn" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200" title="Onda Fluida">
+                        🌊 Onda
+                    </button>
+                    <button id="view-ring-btn" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200" title="Anel Neurodiverso">
+                        ♾️ Anel
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SYNTH CONTROLLER PANEL (Hidden by default) -->
+        <div id="synth-panel" class="hidden glass-card rounded-2xl p-4 border border-purple-900/40 bg-purple-950/20 flex flex-col md:flex-row items-center justify-between gap-3 animate-fadeIn">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-purple-300 bg-purple-900/50 px-2.5 py-1 rounded-lg border border-purple-700/50">
+                    Sintetizador Integrado
+                </span>
+                <span class="text-xs text-slate-300">Gere tons em tempo real para testar a resposta do gráfico:</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button class="synth-preset-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/50 transition-colors" data-type="bass">
+                    🔊 Sub-Grave (80Hz)
+                </button>
+                <button class="synth-preset-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-900/60 hover:bg-teal-800 text-teal-200 border border-teal-700/50 transition-colors" data-type="mid">
+                    🎷 Tom Médio (1kHz)
+                </button>
+                <button class="synth-preset-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-pink-900/60 hover:bg-pink-800 text-pink-200 border border-pink-700/50 transition-colors" data-type="treble">
+                    🔔 Agudo Cristalino (8kHz)
+                </button>
+                <button class="synth-preset-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700/50 transition-colors" data-type="sweep">
+                    🚀 Varredura Complete (Sweep)
+                </button>
+                <button id="synth-stop-btn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-900/40 hover:bg-red-800 text-red-300 border border-red-700/50">
+                    ⏹️ Parar
+                </button>
+            </div>
+        </div>
+
+        <!-- AUDIO FILE PLAYER PANEL (Hidden by default) -->
+        <div id="file-player-panel" class="hidden glass-card rounded-2xl p-4 border border-teal-900/40 bg-teal-950/20 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <button id="file-play-pause-btn" class="w-10 h-10 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 flex items-center justify-center font-bold shadow-md transition-all">
+                    ▶
+                </button>
+                <div class="overflow-hidden">
+                    <p id="file-name-display" class="text-xs font-bold text-slate-200 truncate max-w-xs">Nenhum arquivo carregado</p>
+                    <p id="file-time-display" class="text-[11px] text-slate-400 font-mono">00:00 / 00:00</p>
+                </div>
+            </div>
+            <div class="w-full md:w-1/2 flex items-center gap-3">
+                <input type="range" id="file-seek-bar" min="0" max="100" value="0" class="w-full accent-teal-400">
+            </div>
+        </div>
+
+        <!-- MAIN CANVAS & STEREO VU METERS WORKSPACE -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            <!-- MAIN CANVAS SPECTROGRAM (10 cols on Desktop) -->
+            <div class="lg:col-span-10 glass-panel rounded-3xl p-4 sm:p-6 border border-slate-800 flex flex-col justify-between relative overflow-hidden min-h-[380px]">
+                
+                <!-- Canvas Top Bar Overlay Info -->
+                <div class="flex items-center justify-between mb-4 z-10">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-teal-400 animate-ping"></span>
+                        <span class="text-xs font-bold tracking-wider uppercase text-slate-300">Análise Espectral em Tempo Real</span>
+                    </div>
+                    
+                    <!-- Color Spectrum Legend -->
+                    <div class="hidden sm:flex items-center gap-3 text-[11px] font-medium bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
+                        <span class="flex items-center gap-1 text-indigo-300"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Grave</span>
+                        <span class="flex items-center gap-1 text-teal-300"><span class="w-2 h-2 rounded-full bg-teal-400"></span> Médio</span>
+                        <span class="flex items-center gap-1 text-pink-300"><span class="w-2 h-2 rounded-full bg-pink-500"></span> Agudo</span>
+                    </div>
+                </div>
+
+                <!-- HTML5 CANVAS -->
+                <div class="relative w-full flex-1 flex items-center justify-center my-2 min-h-[280px]">
+                    <canvas id="vu-canvas" class="w-full h-full rounded-2xl border border-slate-800/80 bg-slate-950/60 shadow-inner"></canvas>
+                    
+                    <!-- Watermark / Placeholder overlay when idle -->
+                    <div id="canvas-idle-overlay" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-500">
+                        <div class="w-16 h-16 rounded-full bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-2xl mb-3 text-sky-400">
+                            🎙️
+                        </div>
+                        <p class="text-sm font-semibold text-slate-300">Clique em "Ativar Áudio" para iniciar</p>
+                        <p class="text-xs text-slate-500 mt-1">Use seu microfone, sintetizador ou envie um arquivo MP3</p>
+                    </div>
+                </div>
+
+                <!-- Canvas Footer Status -->
+                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/60">
+                    <span id="canvas-status-text">Pronto para capturar áudio</span>
+                    <span class="font-mono">FFT: 2048 Bins • Web Audio API</span>
+                </div>
+            </div>
+
+            <!-- STEREO VU METERS (2 cols on Desktop) -->
+            <div class="lg:col-span-2 glass-panel rounded-3xl p-5 border border-slate-800 flex flex-col justify-between gap-4">
+                <div class="text-center">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">VU Meter Stereo</h3>
+                    <p class="text-[10px] text-slate-500 font-mono">Nível L/R em dB</p>
+                </div>
+
+                <!-- Stereo Bars Container -->
+                <div class="flex justify-around items-end flex-1 h-64 px-2 py-2 bg-slate-950/70 rounded-2xl border border-slate-800">
+                    
+                    <!-- Left Channel Meter -->
+                    <div class="flex flex-col items-center h-full w-8 justify-end gap-1">
+                        <!-- Peak Indicator Indicator Cap -->
+                        <div id="vu-peak-l" class="w-full h-1 bg-sky-400 rounded-full transition-all duration-300"></div>
+                        <!-- Meter Channel Strip -->
+                        <div class="w-full h-full bg-slate-900 rounded-lg p-0.5 flex flex-col justify-end overflow-hidden relative border border-slate-800">
+                            <div id="vu-fill-l" class="w-full bg-gradient-to-t from-teal-500 via-amber-400 to-rose-500 rounded-sm transition-all duration-75" style="height: 0%;"></div>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-400 font-mono">L</span>
+                        <span id="vu-db-l" class="text-[9px] font-mono text-slate-500">-∞ dB</span>
+                    </div>
+
+                    <!-- dB Scale Markers -->
+                    <div class="flex flex-col justify-between h-full py-1 text-[9px] font-mono text-slate-600 select-none">
+                        <span>+3</span>
+                        <span>0</span>
+                        <span>-6</span>
+                        <span>-12</span>
+                        <span>-24</span>
+                        <span>-40</span>
+                    </div>
+
+                    <!-- Right Channel Meter -->
+                    <div class="flex flex-col items-center h-full w-8 justify-end gap-1">
+                        <!-- Peak Indicator Indicator Cap -->
+                        <div id="vu-peak-r" class="w-full h-1 bg-sky-400 rounded-full transition-all duration-300"></div>
+                        <!-- Meter Channel Strip -->
+                        <div class="w-full h-full bg-slate-900 rounded-lg p-0.5 flex flex-col justify-end overflow-hidden relative border border-slate-800">
+                            <div id="vu-fill-r" class="w-full bg-gradient-to-t from-teal-500 via-amber-400 to-rose-500 rounded-sm transition-all duration-75" style="height: 0%;"></div>
+                        </div>
+                        <span class="text-[11px] font-bold text-slate-400 font-mono">R</span>
+                        <span id="vu-db-r" class="text-[9px] font-mono text-slate-500">-∞ dB</span>
+                    </div>
+
+                </div>
+
+                <!-- Peak Clip LED Indicator -->
+                <div class="flex items-center justify-between px-2 py-1.5 bg-slate-900/90 rounded-xl border border-slate-800 text-[10px]">
+                    <span class="text-slate-400 font-medium">Indicador Pico</span>
+                    <div id="clip-led" class="w-3 h-3 rounded-full bg-slate-800 border border-slate-700 transition-colors"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- NEURODIVERSITY & SENSORY INFORMATION CARD -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-5">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-sky-500 flex items-center justify-center text-2xl text-white shadow-lg shrink-0">
+                    ♾️
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-200">Como funciona a percepção visual do som?</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed mt-1">
+                        Pessoas no espectro do autismo ou com sensibilidades sensoriais muitas vezes processam estímulos auditivos e visuais de maneira única. 
+                        Este visualizador mapeia dinamicamente os **Graves (sons acolhedores)**, **Médios (voz humana e ambiente)** e **Agudos (brilho e detalhes)** em frequências de cores harmônicas. O <strong>Modo Sensorial</strong> suaviza transições para criar uma experiência relaxante.
+                    </p>
+                </div>
+            </div>
+            <button id="sensory-info-btn" class="glass-button px-4 py-2.5 rounded-xl text-xs font-semibold text-sky-300 border-sky-500/30 whitespace-nowrap hover:bg-sky-500/10 transition-colors shrink-0">
+                Saiba Mais sobre Neurodiversidade
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full glass-panel border-t border-slate-800/80 py-4 px-4 lg:px-8 mt-6">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+            <div class="flex items-center gap-2">
+                <span>Visualizador Áudio VU &bull; Conscientização do Autismo</span>
+            </div>
+            <div class="flex items-center gap-4 text-[11px] text-slate-400">
+                <span>Desenvolvido com Web Audio API & Canvas 2D</span>
+                <span>•</span>
+                <span class="text-teal-400">Inclusivo & Sensorialmente Seguro</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INFO MODAL -->
+    <div id="info-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="glass-panel rounded-3xl max-w-lg w-full p-6 border border-slate-700 shadow-2xl relative">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl p-2">✕</button>
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-3xl">♾️</span>
+                <div>
+                    <h2 class="text-lg font-bold text-slate-100">Autismo & Processamento Sensorial</h2>
+                    <p class="text-xs text-teal-400">Recurso de Conscientização e Apoio</p>
+                </div>
+            </div>
+            <div class="text-xs text-slate-300 space-y-3 leading-relaxed max-h-96 overflow-y-auto pr-2">
+                <p>
+                    <strong>O que é o Modo Sensorial?</strong><br>
+                    Para muitos indivíduos autistas, estímulos visuais rápidos, pisca-piscas (flicker) e cores hiper-saturadas podem causar sobrecarga sensorial. O Modo Sensorial reduz a velocidade de reação do Canvas, suaviza os picos e aplica paletas suaves pastel.
+                </p>
+                <p>
+                    <strong>Mapeamento Sonoro por Frequências:</strong><br>
+                    • <strong>Graves (Indigo/Violeta):</strong> Sons de baixa frequência costumam trazer sensação de estabilidade e peso no som.<br>
+                    • <strong>Médios (Turquesa/Ciano):</strong> Onde reside a maioria das frequências da fala e melodia musical.<br>
+                    • <strong>Agudos (Rosa/Dourado):</strong> Sons agudos, pratos e brilho sonoro que chamam atenção auditiva.
+                </p>
+                <p>
+                    <strong>Símbolo do Infinito Colorido:</strong><br>
+                    O infinito arco-íris representa a diversidade do espectro autista e da neurodiversidade — celebrando as infinitas variações das mentes humanas.
+                </p>
+            </div>
+            <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end">
+                <button id="modal-ok-btn" class="px-5 py-2 rounded-xl text-xs font-bold bg-sky-500 text-slate-950 hover:bg-sky-400">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        /**
+         * AUDIO VU SPECTRUM & NEURODIVERSITY VISUALIZER
+         * Web Audio API Engine with Frequency Band Detection and Sensory Friendly Mode
+         */
+
+        // State Management
+        const state = {
+            audioCtx: null,
+            analyser: null,
+            splitter: null,
+            analyserL: null,
+            analyserR: null,
+            gainNode: null,
+            
+            // Sources
+            activeSourceType: 'mic', // 'mic', 'synth', 'file'
+            micStream: null,
+            micSourceNode: null,
+            
+            audioElement: null,
+            fileSourceNode: null,
+            
+            synthOsc: null,
+            synthGain: null,
+            synthInterval: null,
+
+            // Audio parameters
+            sensitivity: 1.8,
+            noiseGatePercent: 8,
+            
+            // Visualizer modes & sensory state
+            visualMode: 'bars', // 'bars', 'wave', 'ring'
+            sensoryMode: false,
+            
+            // Processing arrays
+            dataArray: null,
+            dataArrayL: null,
+            dataArrayR: null,
+            bufferLength: 0,
+            
+            // Peak hold animation memory
+            barPeaks: [],
+            vuPeakL: 0,
+            vuPeakR: 0,
+            
+            // Loop control
+            animFrameId: null,
+            isEngineRunning: false
+        };
+
+        // DOM Elements
+        const canvas = document.getElementById('vu-canvas');
+        const ctx = canvas.getContext('2d');
+        const canvasIdleOverlay = document.getElementById('canvas-idle-overlay');
+        const canvasStatusText = document.getElementById('canvas-status-text');
+
+        // Predominant band DOM
+        const predominantBandText = document.getElementById('predominant-band-text');
+        const predominantHzText = document.getElementById('predominant-hz-text');
+        const bandBadgeIcon = document.getElementById('band-badge-icon');
+        const bandGlowBar = document.getElementById('band-glow-bar');
+
+        // Energy bars DOM
+        const bassBarFill = document.getElementById('bass-bar-fill');
+        const midBarFill = document.getElementById('mid-bar-fill');
+        const trebleBarFill = document.getElementById('treble-bar-fill');
+        const bassPercent = document.getElementById('bass-percent');
+        const midPercent = document.getElementById('mid-percent');
+        const treblePercent = document.getElementById('treble-percent');
+
+        // Stereo VU DOM
+        const vuFillL = document.getElementById('vu-fill-l');
+        const vuFillR = document.getElementById('vu-fill-r');
+        const vuPeakLElem = document.getElementById('vu-peak-l');
+        const vuPeakRElem = document.getElementById('vu-peak-r');
+        const vuDbL = document.getElementById('vu-db-l');
+        const vuDbR = document.getElementById('vu-db-r');
+        const clipLed = document.getElementById('clip-led');
+
+        // Glow Backgrounds
+        const glowBass = document.getElementById('glow-bass');
+        const glowMid = document.getElementById('glow-mid');
+        const glowTreble = document.getElementById('glow-treble');
+
+        // Controls DOM
+        const startAudioBtn = document.getElementById('start-audio-btn');
+        const startBtnText = document.getElementById('start-btn-text');
+        const startIcon = document.getElementById('start-icon');
+
+        const sensoryToggleBtn = document.getElementById('sensory-toggle-btn');
+        const sensoryToggleMobile = document.getElementById('sensory-toggle-mobile');
+        const sensoryStatusTag = document.getElementById('sensory-status-tag');
+        const sensoryIconDot = document.getElementById('sensory-icon-dot');
+
+        const sensitivitySlider = document.getElementById('sensitivity-slider');
+        const sensitivityVal = document.getElementById('sensitivity-val');
+        const noisegateSlider = document.getElementById('noisegate-slider');
+        const noisegateVal = document.getElementById('noisegate-val');
+
+        const srcMicBtn = document.getElementById('src-mic-btn');
+        const srcSynthBtn = document.getElementById('src-synth-btn');
+        const srcFileLabel = document.getElementById('src-file-label');
+        const audioFileInput = document.getElementById('audio-file-input');
+        const fileBtnText = document.getElementById('file-btn-text');
+
+        const synthPanel = document.getElementById('synth-panel');
+        const filePlayerPanel = document.getElementById('file-player-panel');
+        const filePlayPauseBtn = document.getElementById('file-play-pause-btn');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        const fileTimeDisplay = document.getElementById('file-time-display');
+        const fileSeekBar = document.getElementById('file-seek-bar');
+
+        const viewBarsBtn = document.getElementById('view-bars-btn');
+        const viewWaveBtn = document.getElementById('view-wave-btn');
+        const viewRingBtn = document.getElementById('view-ring-btn');
+
+        const infoModal = document.getElementById('info-modal');
+        const sensoryInfoBtn = document.getElementById('sensory-info-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const modalOkBtn = document.getElementById('modal-ok-btn');
+
+        // Resize Canvas dynamically
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-2.5 rounded-xl text-xs font-semibold backdrop-blur-md border shadow-xl flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto ${
+                type === 'error' ? 'bg-red-900/80 border-red-700 text-red-200' :
+                type === 'success' ? 'bg-teal-900/80 border-teal-700 text-teal-200' :
+                'bg-slate-800/90 border-slate-700 text-slate-200'
+            }`;
+            
+            toast.innerHTML = `<span>${type === 'error' ? '⚠️' : type === 'success' ? '✅' : 'ℹ️'}</span><span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Initialize Web Audio API Core Nodes
+        function initAudioContext() {
+            if (!state.audioCtx) {
+                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                state.audioCtx = new AudioCtxClass();
+            }
+
+            if (state.audioCtx.state === 'suspended') {
+                state.audioCtx.resume();
+            }
+
+            if (!state.analyser) {
+                // Main Analyser Node
+                state.analyser = state.audioCtx.createAnalyser();
+                state.analyser.fftSize = 2048;
+                state.analyser.smoothingTimeConstant = state.sensoryMode ? 0.92 : 0.80;
+
+                // Sensitivity Gain Node
+                state.gainNode = state.audioCtx.createGain();
+                state.gainNode.gain.value = state.sensitivity;
+
+                // Stereo Splitter Nodes
+                state.splitter = state.audioCtx.createChannelSplitter(2);
+                state.analyserL = state.audioCtx.createAnalyser();
+                state.analyserR = state.audioCtx.createAnalyser();
+                state.analyserL.fftSize = 512;
+                state.analyserR.fftSize = 512;
+
+                // Connect gain to main analyser
+                state.gainNode.connect(state.analyser);
+                
+                // Connect gain to channel splitter for stereo meters
+                state.gainNode.connect(state.splitter);
+                state.splitter.connect(state.analyserL, 0);
+                state.splitter.connect(state.analyserR, 1);
+
+                state.bufferLength = state.analyser.frequencyBinCount;
+                state.dataArray = new Uint8Array(state.bufferLength);
+                state.dataArrayL = new Uint8Array(state.analyserL.frequencyBinCount);
+                state.dataArrayR = new Uint8Array(state.analyserR.frequencyBinCount);
+
+                state.barPeaks = new Array(64).fill(0);
+            }
+        }
+
+        // Switch Audio Sources
+        async function setAudioSource(type) {
+            initAudioContext();
+            stopCurrentSource();
+
+            state.activeSourceType = type;
+
+            // Highlight active source button
+            [srcMicBtn, srcSynthBtn, srcFileLabel].forEach(btn => {
+                if (btn) btn.classList.remove('bg-sky-500/20', 'border-sky-500', 'text-sky-300');
+            });
+
+            synthPanel.classList.add('hidden');
+            filePlayerPanel.classList.add('hidden');
+
+            try {
+                if (type === 'mic') {
+                    srcMicBtn.classList.add('bg-sky-500/20', 'border-sky-500', 'text-sky-300');
+                    canvasStatusText.textContent = 'Fonte: Microfone ao vivo';
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    state.micStream = stream;
+                    state.micSourceNode = state.audioCtx.createMediaStreamSource(stream);
+                    
+                    // Route mic -> Gain -> Analyser (DO NOT connect to destination to avoid acoustic feedback!)
+                    state.micSourceNode.connect(state.gainNode);
+                    showToast('Microfone ativado com sucesso!', 'success');
+
+                } else if (type === 'synth') {
+                    srcSynthBtn.classList.add('bg-sky-500/20', 'border-sky-500', 'text-sky-300');
+                    synthPanel.classList.remove('hidden');
+                    canvasStatusText.textContent = 'Fonte: Sintetizador de Teste';
+                    playSynthTone('bass');
+                    showToast('Sintetizador de áudio pronto!', 'info');
+
+                } else if (type === 'file') {
+                    srcFileLabel.classList.add('bg-sky-500/20', 'border-sky-500', 'text-sky-300');
+                    filePlayerPanel.classList.remove('hidden');
+                    canvasStatusText.textContent = 'Fonte: Arquivo Áudio Local';
+                }
+
+                if (!state.isEngineRunning) {
+                    startAudioEngine();
+                }
+
+            } catch (err) {
+                console.error('Erro ao acessar fonte de áudio:', err);
+                showToast('Acesso negado ou erro ao conectar áudio: ' + err.message, 'error');
+            }
+        }
+
+        // Stop current audio source safely
+        function stopCurrentSource() {
+            if (state.micStream) {
+                state.micStream.getTracks().forEach(track => track.stop());
+                state.micStream = null;
+            }
+            if (state.micSourceNode) {
+                state.micSourceNode.disconnect();
+                state.micSourceNode = null;
+            }
+            if (state.synthOsc) {
+                try { state.synthOsc.stop(); } catch(e){}
+                state.synthOsc.disconnect();
+                state.synthOsc = null;
+            }
+            if (state.synthInterval) {
+                clearInterval(state.synthInterval);
+                state.synthInterval = null;
+            }
+            if (state.audioElement) {
+                state.audioElement.pause();
+            }
+        }
+
+        // Synth Tone Generator (Bass, Mid, Treble, Sweep)
+        function playSynthTone(type) {
+            if (!state.audioCtx) initAudioContext();
+
+            if (state.synthOsc) {
+                try { state.synthOsc.stop(); } catch(e){}
+                state.synthOsc.disconnect();
+            }
+            if (state.synthInterval) clearInterval(state.synthInterval);
+
+            const osc = state.audioCtx.createOscillator();
+            const oscGain = state.audioCtx.createGain();
+            
+            oscGain.gain.value = 0.3;
+
+            if (type === 'bass') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(80, state.audioCtx.currentTime);
+            } else if (type === 'mid') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, state.audioCtx.currentTime);
+            } else if (type === 'treble') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(6500, state.audioCtx.currentTime);
+            } else if (type === 'sweep') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(60, state.audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(12000, state.audioCtx.currentTime + 3.5);
+                
+                state.synthInterval = setTimeout(() => {
+                    playSynthTone('sweep');
+                }, 3800);
+            }
+
+            osc.connect(oscGain);
+            oscGain.connect(state.gainNode);
+            
+            // Connect synth to speakers so user can hear test sound
+            oscGain.connect(state.audioCtx.destination);
+
+            osc.start();
+            state.synthOsc = osc;
+            state.synthGain = oscGain;
+        }
+
+        // File Upload Handler
+        audioFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            initAudioContext();
+            fileBtnText.textContent = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
+            fileNameDisplay.textContent = file.name;
+
+            if (state.audioElement) {
+                state.audioElement.pause();
+            }
+
+            const url = URL.createObjectURL(file);
+            state.audioElement = new Audio(url);
+            state.audioElement.crossOrigin = 'anonymous';
+
+            if (!state.fileSourceNode) {
+                state.fileSourceNode = state.audioCtx.createMediaElementSource(state.audioElement);
+            }
+
+            state.fileSourceNode.connect(state.gainNode);
+            state.fileSourceNode.connect(state.audioCtx.destination); // Let user hear uploaded audio
+
+            state.audioElement.addEventListener('loadedmetadata', () => {
+                updateTimeDisplay();
+            });
+
+            state.audioElement.addEventListener('timeupdate', () => {
+                updateTimeDisplay();
+                if (state.audioElement.duration) {
+                    fileSeekBar.value = (state.audioElement.currentTime / state.audioElement.duration) * 100;
+                }
+            });
+
+            state.audioElement.addEventListener('ended', () => {
+                filePlayPauseBtn.textContent = '▶';
+            });
+
+            setAudioSource('file');
+            state.audioElement.play();
+            filePlayPauseBtn.textContent = '⏸';
+            showToast('Tocando: ' + file.name, 'success');
+        });
+
+        function updateTimeDisplay() {
+            if (!state.audioElement) return;
+            const cur = formatTime(state.audioElement.currentTime || 0);
+            const dur = formatTime(state.audioElement.duration || 0);
+            fileTimeDisplay.textContent = `${cur} / ${dur}`;
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        filePlayPauseBtn.addEventListener('click', () => {
+            if (!state.audioElement) return;
+            if (state.audioElement.paused) {
+                state.audioElement.play();
+                filePlayPauseBtn.textContent = '⏸';
+            } else {
+                state.audioElement.pause();
+                filePlayPauseBtn.textContent = '▶';
+            }
+        });
+
+        fileSeekBar.addEventListener('input', () => {
+            if (state.audioElement && state.audioElement.duration) {
+                state.audioElement.currentTime = (fileSeekBar.value / 100) * state.audioElement.duration;
+            }
+        });
+
+        // Master Start Button Event
+        startAudioBtn.addEventListener('click', async () => {
+            if (!state.isEngineRunning) {
+                await setAudioSource('mic');
+                startAudioEngine();
+            } else {
+                stopAudioEngine();
+            }
+        });
+
+        function startAudioEngine() {
+            initAudioContext();
+            state.isEngineRunning = true;
+            canvasIdleOverlay.classList.add('opacity-0', 'pointer-events-none');
+            startBtnText.textContent = 'Pausar Áudio';
+            startAudioBtn.classList.remove('from-sky-500', 'to-teal-500');
+            startAudioBtn.classList.add('from-amber-500', 'to-rose-500');
+            
+            resizeCanvas();
+            renderLoop();
+        }
+
+        function stopAudioEngine() {
+            state.isEngineRunning = false;
+            if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
+            stopCurrentSource();
+            
+            canvasIdleOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            startBtnText.textContent = 'Ativar Áudio';
+            startAudioBtn.classList.remove('from-amber-500', 'to-rose-500');
+            startAudioBtn.classList.add('from-sky-500', 'to-teal-500');
+            canvasStatusText.textContent = 'Áudio pausado';
+        }
+
+        // MAIN RENDER LOOP
+        function renderLoop() {
+            if (!state.isEngineRunning) return;
+
+            state.animFrameId = requestAnimationFrame(renderLoop);
+
+            // Fetch Frequency Data
+            state.analyser.getByteFrequencyData(state.dataArray);
+            state.analyserL.getByteFrequencyData(state.dataArrayL);
+            state.analyserR.getByteFrequencyData(state.dataArrayR);
+
+            // Compute Noise Gate threshold offset
+            const noiseFloor = (state.noiseGatePercent / 100) * 255;
+
+            // Calculate Frequency Band Energies (Bass: 20-250Hz, Mid: 250-4000Hz, Treble: 4k-20kHz)
+            const sampleRate = state.audioCtx.sampleRate;
+            const binHz = sampleRate / state.analyser.fftSize; // ~21.5Hz per bin
+
+            const bassMaxBin = Math.floor(250 / binHz);
+            const midMaxBin = Math.floor(4000 / binHz);
+            const trebleMaxBin = Math.min(Math.floor(18000 / binHz), state.bufferLength);
+
+            let bassSum = 0, bassCount = 0;
+            let midSum = 0, midCount = 0;
+            let trebleSum = 0, trebleCount = 0;
+
+            for (let i = 0; i < state.bufferLength; i++) {
+                let val = state.dataArray[i];
+                if (val < noiseFloor) val = 0;
+
+                if (i <= bassMaxBin) {
+                    bassSum += val;
+                    bassCount++;
+                } else if (i <= midMaxBin) {
+                    midSum += val;
+                    midCount++;
+                } else if (i <= trebleMaxBin) {
+                    trebleSum += val;
+                    trebleCount++;
+                }
+            }
+
+            const bassAvg = bassCount ? bassSum / bassCount : 0;
+            const midAvg = midCount ? midSum / midCount : 0;
+            const trebleAvg = trebleCount ? trebleSum / trebleCount : 0;
+
+            // Normalize percentages (0-100%)
+            const bassP = Math.min(100, Math.round((bassAvg / 255) * 100 * 1.5));
+            const midP = Math.min(100, Math.round((midAvg / 255) * 100 * 1.8));
+            const trebleP = Math.min(100, Math.round((trebleAvg / 255) * 100 * 2.2));
+
+            // Update DOM Band Percentage Bars
+            bassBarFill.style.width = bassP + '%';
+            midBarFill.style.width = midP + '%';
+            trebleBarFill.style.width = trebleP + '%';
+
+            bassPercent.textContent = bassP + '%';
+            midPercent.textContent = midP + '%';
+            treblePercent.textContent = trebleP + '%';
+
+            // Determine Predominant Frequency Band
+            let dominantBand = 'Silêncio';
+            let freqHz = 0;
+            let dominantColor = '#64748b';
+
+            const maxEnergy = Math.max(bassAvg, midAvg, trebleAvg);
+
+            if (maxEnergy > noiseFloor) {
+                if (bassAvg >= midAvg && bassAvg >= trebleAvg) {
+                    dominantBand = 'Grave (Bass)';
+                    freqHz = Math.round(120 * (bassP / 100) + 40);
+                    dominantColor = state.sensoryMode ? '#818cf8' : '#6366f1'; // Indigo/Violet
+                    
+                    glowBass.style.opacity = (bassP / 100) * 0.8;
+                    glowMid.style.opacity = '0.2';
+                    glowTreble.style.opacity = '0.2';
+                } else if (midAvg >= bassAvg && midAvg >= trebleAvg) {
+                    dominantBand = 'Médio (Mid)';
+                    freqHz = Math.round(2000 * (midP / 100) + 250);
+                    dominantColor = state.sensoryMode ? '#5eead4' : '#14b8a6'; // Cyan/Turquoise
+                    
+                    glowBass.style.opacity = '0.2';
+                    glowMid.style.opacity = (midP / 100) * 0.8;
+                    glowTreble.style.opacity = '0.2';
+                } else {
+                    dominantBand = 'Agudo (Treble)';
+                    freqHz = Math.round(10000 * (trebleP / 100) + 4000);
+                    dominantColor = state.sensoryMode ? '#fbcfe8' : '#ec4899'; // Pink/Lilac
+                    
+                    glowBass.style.opacity = '0.2';
+                    glowMid.style.opacity = '0.2';
+                    glowTreble.style.opacity = (trebleP / 100) * 0.8;
+                }
+            } else {
+                glowBass.style.opacity = '0.1';
+                glowMid.style.opacity = '0.1';
+                glowTreble.style.opacity = '0.1';
+            }
+
+            predominantBandText.textContent = dominantBand;
+            predominantBandText.style.color = dominantColor;
+            predominantHzText.textContent = freqHz > 0 ? `~${freqHz} Hz` : '0 Hz';
+            bandGlowBar.style.backgroundColor = dominantColor;
+            bandBadgeIcon.style.borderColor = dominantColor;
+
+            // Stereo Peak RMS Calculation
+            updateStereoMeters();
+
+            // Clear and Render Canvas Graphic
+            drawCanvasVisualizer(binHz, noiseFloor);
+        }
+
+        // Stereo L/R Meters Calculation in dB (-40dB to +3dB)
+        function updateStereoMeters() {
+            const getRMS = (arr) => {
+                let sum = 0;
+                for (let i = 0; i < arr.length; i++) {
+                    const norm = arr[i] / 255;
+                    sum += norm * norm;
+                }
+                return Math.sqrt(sum / arr.length);
+            };
+
+            const rmsL = getRMS(state.dataArrayL);
+            const rmsR = getRMS(state.dataArrayR);
+
+            // Convert RMS to percentage height (0 to 100%)
+            const percentL = Math.min(100, Math.pow(rmsL * 1.8, 0.8) * 100);
+            const percentR = Math.min(100, Math.pow(rmsR * 1.8, 0.8) * 100);
+
+            vuFillL.style.height = percentL + '%';
+            vuFillR.style.height = percentR + '%';
+
+            // Calculate dB display (-40dB to +3dB)
+            const dbL = rmsL > 0.001 ? Math.round(20 * Math.log10(rmsL)) : -40;
+            const dbR = rmsR > 0.001 ? Math.round(20 * Math.log10(rmsR)) : -40;
+
+            vuDbL.textContent = dbL <= -40 ? '-∞ dB' : `${dbL} dB`;
+            vuDbR.textContent = dbR <= -40 ? '-∞ dB' : `${dbR} dB`;
+
+            // Peak Hold Decay Logic
+            if (percentL > state.vuPeakL) state.vuPeakL = percentL;
+            else state.vuPeakL = Math.max(0, state.vuPeakL - 1.5);
+
+            if (percentR > state.vuPeakR) state.vuPeakR = percentR;
+            else state.vuPeakR = Math.max(0, state.vuPeakR - 1.5);
+
+            vuPeakLElem.style.bottom = state.vuPeakL + '%';
+            vuPeakRElem.style.bottom = state.vuPeakR + '%';
+
+            // Clip LED Warning
+            if (percentL > 92 || percentR > 92) {
+                clipLed.classList.add('bg-red-500', 'shadow-lg', 'shadow-red-500/80');
+            } else {
+                clipLed.classList.remove('bg-red-500', 'shadow-lg', 'shadow-red-500/80');
+            }
+        }
+
+        // CANVAS DRAWING ENGINE
+        function drawCanvasVisualizer(binHz, noiseFloor) {
+            const width = canvas.width / window.devicePixelRatio;
+            const height = canvas.height / window.devicePixelRatio;
+
+            ctx.clearRect(0, 0, width, height);
+
+            if (state.visualMode === 'bars') {
+                drawVUBargraph(width, height, binHz, noiseFloor);
+            } else if (state.visualMode === 'wave') {
+                drawSmoothWave(width, height);
+            } else if (state.visualMode === 'ring') {
+                drawNeuroRing(width, height);
+            }
+        }
+
+        // 1. VU BARGRAPH SPECTRUM (32/64 Logarithmic Bars with Color Frequency Mapping)
+        function drawVUBargraph(width, height, binHz, noiseFloor) {
+            const numBars = 48;
+            const padding = 4;
+            const totalPadding = padding * (numBars + 1);
+            const barWidth = Math.max(2, (width - totalPadding) / numBars);
+
+            for (let i = 0; i < numBars; i++) {
+                // Logarithmic frequency bin indexing for better visual distribution
+                const logIndex = Math.floor(Math.pow(i / numBars, 1.8) * (state.bufferLength * 0.6));
+                let rawVal = state.dataArray[logIndex] || 0;
+
+                if (rawVal < noiseFloor) rawVal = 0;
+
+                const barFreq = logIndex * binHz;
+                const normalizedHeight = (rawVal / 255) * (height * 0.85);
+
+                // Peak Cap Smooth Physics
+                if (normalizedHeight > state.barPeaks[i]) {
+                    state.barPeaks[i] = normalizedHeight;
+                } else {
+                    state.barPeaks[i] = Math.max(0, state.barPeaks[i] - (state.sensoryMode ? 0.8 : 2.5));
+                }
+
+                const x = padding + i * (barWidth + padding);
+                const y = height - normalizedHeight;
+
+                // Color Mapping By Frequency Band
+                let gradient;
+                if (state.sensoryMode) {
+                    // Soft Pastel Calming Colors
+                    gradient = ctx.createLinearGradient(0, height, 0, 0);
+                    if (barFreq < 250) { // Grave
+                        gradient.addColorStop(0, '#4338ca');
+                        gradient.addColorStop(1, '#818cf8');
+                    } else if (barFreq < 4000) { // Médio
+                        gradient.addColorStop(0, '#0f766e');
+                        gradient.addColorStop(1, '#5eead4');
+                    } else { // Agudo
+                        gradient.addColorStop(0, '#be185d');
+                        gradient.addColorStop(1, '#fbcfe8');
+                    }
+                } else {
+                    // Vibrant Neurodiversity Theme Colors
+                    gradient = ctx.createLinearGradient(0, height, 0, 0);
+                    if (barFreq < 250) { // Grave
+                        gradient.addColorStop(0, '#1e1b4b');
+                        gradient.addColorStop(0.5, '#4338ca');
+                        gradient.addColorStop(1, '#8b5cf6');
+                    } else if (barFreq < 4000) { // Médio
+                        gradient.addColorStop(0, '#042f2e');
+                        gradient.addColorStop(0.5, '#0d9488');
+                        gradient.addColorStop(1, '#38bdf8');
+                    } else { // Agudo
+                        gradient.addColorStop(0, '#831843');
+                        gradient.addColorStop(0.5, '#ec4899');
+                        gradient.addColorStop(1, '#fbbf24');
+                    }
+                }
+
+                // Draw Bar
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.roundRect(x, y, barWidth, normalizedHeight, [4, 4, 0, 0]);
+                ctx.fill();
+
+                // Draw Peak Hold Cap
+                if (state.barPeaks[i] > 2) {
+                    const peakY = height - state.barPeaks[i] - 3;
+                    ctx.fillStyle = state.sensoryMode ? '#f8fafc' : '#ffffff';
+                    ctx.fillRect(x, peakY, barWidth, 2);
+                }
+            }
+        }
+
+        // 2. SMOOTH WAVEFORM SPECTRUM
+        function drawSmoothWave(width, height) {
+            const timeData = new Uint8Array(state.analyser.fftSize);
+            state.analyser.getByteTimeDomainData(timeData);
+
+            ctx.lineWidth = state.sensoryMode ? 3 : 4;
+            
+            // Create Dynamic Wave Gradient
+            const waveGrad = ctx.createLinearGradient(0, 0, width, 0);
+            waveGrad.addColorStop(0, '#8b5cf6'); // Bass Indigo
+            waveGrad.addColorStop(0.5, '#14b8a6'); // Mid Teal
+            waveGrad.addColorStop(1, '#ec4899'); // High Pink
+
+            ctx.strokeStyle = waveGrad;
+            ctx.beginPath();
+
+            const sliceWidth = width / timeData.length;
+            let x = 0;
+
+            for (let i = 0; i < timeData.length; i++) {
+                const v = timeData[i] / 128.0;
+                const y = (v * height) / 2;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+
+                x += sliceWidth;
+            }
+
+            ctx.lineTo(width, height / 2);
+            ctx.stroke();
+
+            // Glow Effect in Standard Mode
+            if (!state.sensoryMode) {
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#38bdf8';
+            } else {
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // 3. NEURODIVERSITY INFINITY RADIAL SPECTRUM
+        function drawNeuroRing(width, height) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(centerX, centerY) * 0.45;
+            const numPoints = 64;
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+
+            // Inner Ring Gradient
+            const ringGrad = ctx.createConicGradient(0, 0, 0);
+            ringGrad.addColorStop(0, '#8b5cf6');
+            ringGrad.addColorStop(0.33, '#38bdf8');
+            ringGrad.addColorStop(0.66, '#14b8a6');
+            ringGrad.addColorStop(1, '#ec4899');
+
+            ctx.strokeStyle = ringGrad;
+            ctx.lineWidth = state.sensoryMode ? 2 : 3;
+
+            ctx.beginPath();
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (i / numPoints) * Math.PI * 2;
+                const logIndex = Math.floor(Math.pow(i / numPoints, 1.5) * (state.bufferLength * 0.5));
+                const val = state.dataArray[logIndex] || 0;
+                
+                const amp = (val / 255) * (radius * 0.8);
+                const r = radius + amp;
+
+                const x = Math.cos(angle) * r;
+                const y = Math.sin(angle) * r;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+
+            // Central Infinity Symbol Overlay
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.opacity = 0.8;
+            ctx.beginPath();
+            const infScale = radius * 0.35;
+            for (let t = 0; t <= Math.PI * 2; t += 0.05) {
+                const scale = 2 / (3 - Math.cos(2 * t));
+                const x = scale * Math.cos(t) * infScale;
+                const y = scale * Math.sin(2 * t) / 2 * infScale;
+                if (t === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // SENSORY FRIENDLY MODE TOGGLE
+        function toggleSensoryMode() {
+            state.sensoryMode = !state.sensoryMode;
+
+            if (state.sensoryMode) {
+                document.body.classList.add('sensory-mode');
+                sensoryStatusTag.textContent = 'ON';
+                sensoryStatusTag.className = 'px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40';
+                sensoryIconDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
+                
+                if (state.analyser) {
+                    state.analyser.smoothingTimeConstant = 0.92; // Ultra smooth movement
+                }
+                showToast('Modo Sensorial Calmo ATIVADO (Cores pastéis e movimentos suavizados)', 'info');
+            } else {
+                document.body.classList.remove('sensory-mode');
+                sensoryStatusTag.textContent = 'OFF';
+                sensoryStatusTag.className = 'px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700';
+                sensoryIconDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+                
+                if (state.analyser) {
+                    state.analyser.smoothingTimeConstant = 0.80;
+                }
+                showToast('Modo Sensorial Desativado (Modo Vibrante Padrão)', 'info');
+            }
+        }
+
+        sensoryToggleBtn.addEventListener('click', toggleSensoryMode);
+        sensoryToggleMobile.addEventListener('click', toggleSensoryMode);
+
+        // UI Event Listeners for Controls & Sliders
+        sensitivitySlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            state.sensitivity = val;
+            sensitivityVal.textContent = val.toFixed(1) + 'x';
+            if (state.gainNode) state.gainNode.gain.value = val;
+        });
+
+        noisegateSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            state.noiseGatePercent = val;
+            noisegateVal.textContent = val + '%';
+        });
+
+        // Source Button Clicks
+        srcMicBtn.addEventListener('click', () => setAudioSource('mic'));
+        srcSynthBtn.addEventListener('click', () => setAudioSource('synth'));
+
+        // Synth Presets Clicks
+        document.querySelectorAll('.synth-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-type');
+                playSynthTone(type);
+            });
+        });
+
+        document.getElementById('synth-stop-btn').addEventListener('click', () => {
+            if (state.synthOsc) {
+                try { state.synthOsc.stop(); } catch(e){}
+                state.synthOsc = null;
+            }
+            if (state.synthInterval) clearInterval(state.synthInterval);
+        });
+
+        // Visual Mode Selector Buttons
+        viewBarsBtn.addEventListener('click', () => setVisualMode('bars'));
+        viewWaveBtn.addEventListener('click', () => setVisualMode('wave'));
+        viewRingBtn.addEventListener('click', () => setVisualMode('ring'));
+
+        function setVisualMode(mode) {
+            state.visualMode = mode;
+            [viewBarsBtn, viewWaveBtn, viewRingBtn].forEach(btn => {
+                btn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200';
+            });
+
+            if (mode === 'bars') viewBarsBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-sky-300 bg-slate-800 border border-slate-700';
+            if (mode === 'wave') viewWaveBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-teal-300 bg-slate-800 border border-slate-700';
+            if (mode === 'ring') viewRingBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-medium text-purple-300 bg-slate-800 border border-slate-700';
+        }
+
+        // Modal Controls
+        sensoryInfoBtn.addEventListener('click', () => {
+            infoModal.classList.remove('hidden');
+            setTimeout(() => infoModal.classList.remove('opacity-0'), 10);
+        });
+
+        function closeModal() {
+            infoModal.classList.add('opacity-0');
+            setTimeout(() => infoModal.classList.add('hidden'), 300);
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modalOkBtn.addEventListener('click', closeModal);
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) closeModal();
+        });
+
+        // Initialize Canvas size on load
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+        });
+
+    </script>
+</body>
+</html>
